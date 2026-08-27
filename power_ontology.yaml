@@ -1,0 +1,388 @@
+# ============================================================
+# 配电网本体模型定义 (Power Distribution Ontology)
+# 三层规范: YAML 定义 → OWL/RDFS 序列化 → SWRL 推理规则
+# ============================================================
+ontology:
+  name: PowerDistributionOntology
+  namespace: "http://example.org/power#"
+  version: "2.0"
+  description: "10kV配电网设备拓扑、故障推理与检修决策本体模型"
+
+# ==================== 类定义 (23个) ====================
+classes:
+  # --- 设备顶层抽象 ---
+  - id: PowerEquipment
+    label: 电力设备
+    parent: owl:Thing
+    description: 所有电力设备的顶层抽象类
+
+  - id: Substation
+    label: 变电站
+    parent: PowerEquipment
+    description: 电压变换与电能分配枢纽
+
+  - id: Feeder
+    label: 馈线
+    parent: PowerEquipment
+    description: 变电站10kV出线回路
+
+  - id: LineSegment
+    label: 线路段
+    parent: PowerEquipment
+    description: 两设备节点间的物理线段
+
+  - id: Switch
+    label: 开关
+    parent: PowerEquipment
+    description: 具备分合闸功能的开关设备
+
+  - id: CircuitBreaker
+    label: 断路器
+    parent: Switch
+    description: 可切断故障电流，带继电保护
+
+  - id: SectionalizingSwitch
+    label: 分段开关
+    parent: Switch
+    description: 线路分段，用于故障隔离
+
+  - id: TieSwitch
+    label: 联络开关
+    parent: Switch
+    description: 馈线间联络，常开运行
+
+  - id: LoadBreakSwitch
+    label: 负荷开关
+    parent: Switch
+    description: 可断负荷电流，不可断故障电流
+
+  - id: DistributionTransformer
+    label: 配电变压器
+    parent: PowerEquipment
+    description: 10kV/0.4kV配变
+
+  - id: CapacitorBank
+    label: 电容器组
+    parent: PowerEquipment
+    description: 无功补偿装置
+
+  # --- 用户类 ---
+  - id: Customer
+    label: 用户
+    parent: owl:Thing
+    description: 电力消费者
+
+  - id: ResidentialCustomer
+    label: 居民用户
+    parent: Customer
+
+  - id: CommercialCustomer
+    label: 商业用户
+    parent: Customer
+
+  - id: IndustrialCustomer
+    label: 工业用户
+    parent: Customer
+
+  - id: CriticalCustomer
+    label: 重要用户
+    parent: Customer
+    description: 医院、学校、政府等重要负荷，失电需优先恢复
+
+  # --- 事件类 ---
+  - id: Event
+    label: 事件
+    parent: owl:Thing
+
+  - id: Fault
+    label: 故障
+    parent: Event
+    description: 设备或线路故障
+
+  - id: Outage
+    label: 停电事件
+    parent: Event
+    description: 由故障或检修引起的停电
+
+  - id: MaintenanceWorkOrder
+    label: 检修工单
+    parent: Event
+    description: 计划性检修工作票
+
+  # --- 量测类 ---
+  - id: Measurement
+    label: 量测
+    parent: owl:Thing
+
+  - id: LoadMeasurement
+    label: 负荷量测
+    parent: Measurement
+
+  - id: VoltageMeasurement
+    label: 电压量测
+    parent: Measurement
+
+# ==================== 对象属性 (17个) ====================
+object_properties:
+  - id: suppliesPowerTo
+    label: 供电给
+    domain: PowerEquipment
+    range: [PowerEquipment, Customer]
+    inverse: poweredBy
+
+  - id: poweredBy
+    label: 由...供电
+    domain: Customer
+    range: PowerEquipment
+
+  - id: upstreamOf
+    label: 位于...上游
+    domain: PowerEquipment
+    range: PowerEquipment
+    inverse: downstreamOf
+    characteristics: [transitive]
+
+  - id: downstreamOf
+    label: 位于...下游
+    domain: PowerEquipment
+    range: PowerEquipment
+    characteristics: [transitive]
+
+  - id: connectsTo
+    label: 电气连接
+    domain: PowerEquipment
+    range: PowerEquipment
+
+  - id: belongsToFeeder
+    label: 属于馈线
+    domain: PowerEquipment
+    range: Feeder
+
+  - id: belongsToSubstation
+    label: 属于变电站
+    domain: Feeder
+    range: Substation
+
+  - id: servedByTransformer
+    label: 由配变供电
+    domain: Customer
+    range: DistributionTransformer
+
+  - id: transfersLoadTo
+    label: 转供负荷至
+    domain: Feeder
+    range: Feeder
+
+  - id: hasMeasurement
+    label: 具有量测
+    domain: PowerEquipment
+    range: Measurement
+
+  - id: hasFault
+    label: 发生故障
+    domain: PowerEquipment
+    range: Fault
+
+  - id: causesOutage
+    label: 导致停电
+    domain: Fault
+    range: Outage
+
+  - id: affectsEquipment
+    label: 影响设备
+    domain: Outage
+    range: PowerEquipment
+
+  - id: affectsCustomer
+    label: 影响用户
+    domain: Outage
+    range: Customer
+
+  - id: isolatesSegment
+    label: 隔离线段
+    domain: Switch
+    range: LineSegment
+
+  - id: recoversVia
+    label: 经...恢复供电
+    domain: Outage
+    range: TieSwitch
+
+  - id: targetsEquipment
+    label: 针对设备
+    domain: MaintenanceWorkOrder
+    range: PowerEquipment
+
+# ==================== 数据属性 (21个) ====================
+data_properties:
+  - id: ratedVoltage_kV
+    label: 额定电压(kV)
+    domain: PowerEquipment
+    range: float
+
+  - id: ratedCapacity_kVA
+    label: 额定容量(kVA)
+    domain: DistributionTransformer
+    range: float
+
+  - id: load_kW
+    label: 有功负荷(kW)
+    domain: [DistributionTransformer, Customer, Feeder]
+    range: float
+
+  - id: loadRate
+    label: 负载率
+    domain: [DistributionTransformer, Feeder]
+    range: float
+
+  - id: switchState
+    label: 开关状态
+    domain: Switch
+    range: string
+    comment: "open=分闸, closed=合闸"
+
+  - id: normallyOpen
+    label: 常开标志
+    domain: TieSwitch
+    range: boolean
+
+  - id: longitude
+    label: 经度
+    domain: PowerEquipment
+    range: float
+
+  - id: latitude
+    label: 纬度
+    domain: PowerEquipment
+    range: float
+
+  - id: faultType
+    label: 故障类型
+    domain: Fault
+    range: string
+    comment: "短路/接地/断线/过负荷"
+
+  - id: faultLevel
+    label: 故障等级
+    domain: Fault
+    range: string
+    comment: "紧急/重大/一般"
+
+  - id: outageStartTime
+    label: 停电开始时间
+    domain: Outage
+    range: datetime
+
+  - id: outageDuration_min
+    label: 停电时长(分钟)
+    domain: Outage
+    range: int
+
+  - id: workOrderType
+    label: 工单类型
+    domain: MaintenanceWorkOrder
+    range: string
+    comment: "计划检修/临时检修/应急抢修"
+
+  - id: workOrderStatus
+    label: 工单状态
+    domain: MaintenanceWorkOrder
+    range: string
+    comment: "待执行/执行中/已完成"
+
+  - id: priority
+    label: 优先级
+    domain: [MaintenanceWorkOrder, Customer]
+    range: int
+
+  - id: voltage_pu
+    label: 电压标幺值
+    domain: VoltageMeasurement
+    range: float
+
+  - id: current_A
+    label: 电流(A)
+    domain: [Feeder, LineSegment]
+    range: float
+
+  - id: resistance_ohm
+    label: 电阻(Ω)
+    domain: LineSegment
+    range: float
+
+  - id: length_km
+    label: 长度(km)
+    domain: LineSegment
+    range: float
+
+  - id: tie_capacity_MW
+    label: 联络转供容量(MW)
+    domain: TieSwitch
+    range: float
+
+  - id: spareCapacity_kVA
+    label: 备用容量(kVA)
+    domain: Feeder
+    range: float
+
+# ==================== 推理公理 (10条) ====================
+axioms:
+  - id: AX-001
+    name: 故障传播规则
+    category: 故障传播
+    swrl: "switchState(?s,'open') ∧ upstreamOf(?s,?d) → outageStatus(?d,true)"
+    description: 开关分闸时，其下游所有设备失电
+
+  - id: AX-002
+    name: 过载触发规则
+    category: 过载预警
+    swrl: "DistributionTransformer(?t) ∧ loadRate(?t,?r) ∧ greaterThan(?r,0.8) → OverloadAlarm(?t)"
+    description: 配变负载率超过80%触发过载告警
+
+  - id: AX-003
+    name: 负荷转移可行性判定
+    category: 转供决策
+    swrl: "TieSwitch(?ts) ∧ connectsTo(?ts,?f2) ∧ spareCapacity_kVA(?f2,?c) ∧ transferLoad(?f1,?l) ∧ greaterThan(?c,?l) → TransferFeasible(?ts)"
+    description: 联络开关目标馈线备用容量≥转移负荷时允许转供
+
+  - id: AX-004
+    name: 故障隔离最小区域
+    category: 故障定位
+    swrl: "Fault(?f) ∧ locatedOn(?f,?seg) → isolateBy(?seg, nearestUpSwitch, nearestDownSwitch)"
+    description: 故障线段由最近上下游开关隔离
+
+  - id: AX-005
+    name: 用户停电判定
+    category: 影响分析
+    swrl: "servedByTransformer(?c,?t) ∧ outageStatus(?t,true) → outageStatus(?c,true)"
+    description: 供电配变失电则用户停电
+
+  - id: AX-006
+    name: 检修约束规则
+    category: 安全约束
+    swrl: "MaintenanceWorkOrder(?w) ∧ targetsEquipment(?w,?e) ∧ status(?w,'执行中') → prohibitOperation(?e)"
+    description: 存在执行中工单的设备禁止遥控操作
+
+  - id: AX-007
+    name: 联络开关合闸约束
+    category: 安全约束
+    swrl: "TieSwitch(?ts) ∧ ¬samePowerSource(?ts) → prohibitClose(?ts)"
+    description: 不同电源馈线间联络开关禁止合闸（防非同期）
+
+  - id: AX-008
+    name: N-1安全校验
+    category: 安全分析
+    swrl: "∀e∈Equipment: fail(e) ∧ totalLoad ≤ remainingCapacity → N1Pass"
+    description: 任一设备故障后剩余容量仍满足全部负荷
+
+  - id: AX-009
+    name: 电压越限判定
+    category: 电能质量
+    swrl: "VoltageMeasurement(?v) ∧ (voltage_pu(?v)<0.95 ∨ voltage_pu(?v)>1.05) → VoltageViolation(?v)"
+    description: 电压标幺值超出[0.95,1.05]判定越限
+
+  - id: AX-010
+    name: 重要用户优先恢复
+    category: 恢复决策
+    swrl: "Outage(?c1) ∧ Outage(?c2) ∧ CriticalCustomer(?c1) ∧ ¬CriticalCustomer(?c2) → restorePriority(?c1)>restorePriority(?c2)"
+    description: 停电恢复时重要用户优先级高于普通用户

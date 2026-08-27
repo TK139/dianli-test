@@ -1,0 +1,33 @@
+# llm_config.yaml — 大模型 API 配置
+# 支持所有 OpenAI 兼容接口：DeepSeek / 通义千问 / Moonshot / OpenAI / Ollama
+
+llm:
+  api_key: "sk-ws-H.EXDELHY.XqXz.MEUCIFv-gvoGlGz15NvBv7LBoCUVuYtPvLI94PEtxTdKAWoOAiEAtcbjtCG5dWynWCUbatDtQinYVcKNiYMPIS4eSi9xiTw"   # ← 替换为你的 Key
+  base_url: "https://ws-f2mxvep7br1uog58.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"  # ← 替换为对应平台地址
+  model: "qwen-plus"                   # ← 替换为模型名
+  temperature: 0.3
+  max_tokens: 2048
+
+# ──────────────────────────────────────────────
+# 各平台配置参考（取消注释替换即可）
+# ──────────────────────────────────────────────
+# DeepSeek:
+#   base_url: https://api.deepseek.com/v1
+#   model: deepseek-chat
+#
+# 通义千问:
+#   base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+#   model: qwen-plus
+#
+# Moonshot:
+#   base_url: https://api.moonshot.cn/v1
+#   model: moonshot-v1-8k
+#
+# OpenAI:
+#   base_url: https://api.openai.com/v1
+#   model: gpt-4o
+#
+# 本地 Ollama:
+#   api_key: "ollama"
+#   base_url: http://host.docker.internal:11434/v1
+#   model: qwen2.5:14b
