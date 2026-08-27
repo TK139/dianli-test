@@ -76,10 +76,8 @@ llm:
   model: "qwen-plus"                   # ← 替换为模型名 
   
 3. 一键构建 + 初始化 + 启动
-###可以直接调用做好的镜像
-## docker load -i power-test-app.tar 
-## docker load -i power-test-init.tar 
-## docker load -i power-test-neo4j.tar 
+###docker load -i neo4j.5.25.1.tar
+###docker load -i python.3.11.tar 
 docker compose up -d --build
 
 4. 查看初始化日志
