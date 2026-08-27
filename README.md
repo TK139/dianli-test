@@ -70,7 +70,11 @@ cd power-test
 
 2. 配置 API Key
 vim llm_config.yaml
-
+llm:
+  api_key: "####"   # ← 替换为你的 Key
+  base_url: "####"  # ← >替换为对应平台地址
+  model: "qwen-plus"                   # ← 替换为模型名 
+  
 3. 一键构建 + 初始化 + 启动
 ###可以直接调用做好的镜像
 ## docker load -i power-test-app.tar 
